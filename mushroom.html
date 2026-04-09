@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>搶蘑菇助手</title>
+    <style>
+        :root { --bg-color: #f7f6f2; --primary-green: #29a781; --buff-orange: #ff9800; --text-main: #333; --text-sub: #888; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; }
+        .container { width: 100%; max-width: 450px; }
+        .header { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.2rem; margin: 0; }
+        .notif-badge { font-size: 12px; padding: 4px 8px; border-radius: 20px; cursor: pointer; background: #ddd; transition: 0.3s; }
+        .notif-on { background: #ff9800; color: white; }
+        
+        .add-card { background: #f0f0e8; padding: 15px; border-radius: 20px; margin-bottom: 20px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .stepper { flex: 1; display: flex; flex-direction: column; align-items: center; background: white; border-radius: 12px; padding: 5px; border: 1px solid #ddd; }
+        .stepper span { font-size: 12px; color: var(--text-sub); }
+        .stepper-controls { display: flex; align-items: center; width: 100%; justify-content: space-between; }
+        .step-btn { width: 40px; height: 40px; border: none; background: #eee; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        input[type="number"] { width: 50px; border: none; text-align: center; font-size: 1.4rem; font-weight: bold; outline: none; background: transparent; cursor: ns-resize; }
+        .add-btn { width: 100%; padding: 16px; border: none; border-radius: 12px; background: var(--primary-green); color: white; cursor: pointer; font-size: 1rem; font-weight: bold; }
+
+        .timer-card { background: white; border: 2px solid var(--primary-green); border-radius: 20px; padding: 15px; margin-bottom: 15px; position: relative; }
+        .phase-buff { border-color: var(--buff-orange); }
+        
+        .timer-header { display: flex; align-items: center; justify-content: space-between; }
+        .mush-icon { font-size: 36px; }
+        .status-tag { background: #e8f5f1; color: var(--primary-green); font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+        .status-tag.buffing { background: #fff3e0; color: var(--buff-orange); }
+
+        .time-display { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; font-weight: bold; }
+        .current-time { font-family: monospace; transition: all 0.3s; }
+        .active-timer { color: var(--primary-green); font-size: 2.5rem; }
+        .active-buff { color: var(--buff-orange); font-size: 2.5rem; }
+        .plus-sign { font-size: 1.5rem; color: #bbb; }
+        .inactive-time { color: #888; font-size: 1.5rem; }
+
+        .progress-container { background: #eee; height: 10px; border-radius: 5px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { background: var(--primary-green); height: 100%; width: 100%; transition: width 1s linear; }
+        .bar-buff { background: var(--buff-orange); }
+
+        .controls { display: flex; gap: 8px; }
+        .control-btn { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; background: white; cursor: pointer; font-weight: bold; }
+        .close-btn { width: 50px; flex: none; color: #cc0000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🍄 搶蘑菇計時器</h1>
+        <div id="notifStatus" class="notif-badge" onclick="requestNotif()">🔔 點我開啟通知</div>
+    </div>
+
+    <div class="add-card">
+        <div class="input-row">
+            <div class="stepper">
+                <span>小時</span>
+                <div class="stepper-controls">
+                    <button class="step-btn" onclick="modifyValue('hrInput', -1)">-</button>
+                    <input type="number" id="hrInput" value="0" min="0" onwheel="handleWheel(event)">
+                    <button class="step-btn" onclick="modifyValue('hrInput', 1)">+</button>
+                </div>
+            </div>
+            <div class="stepper">
+                <span>分鐘</span>
+                <div class="stepper-controls">
+                    <button class="step-btn" onclick="modifyValue('minInput', -1)">-</button>
+                    <input type="number" id="minInput" value="10" min="0" max="59" onwheel="handleWheel(event)">
+                    <button class="step-btn" onclick="modifyValue('minInput', 1)">+</button>
+                </div>
+            </div>
+        </div>
+        <button class="add-btn" onclick="addNewTimer()">＋ 新增雙段計時</button>
+    </div>
+
+    <div id="timerList"></div>
+</div>
+
+<script>
+    const mushIcons = ["🍄", "🍄‍🟫", "💎", "🔥", "💧", "⚡"];
+    let timers = [];
+
+    // 滑鼠滾輪處理
+    function handleWheel(event) {
+        event.preventDefault();
+        const direction = event.deltaY < 0 ? 1 : -1;
+        modifyValue(event.target.id, direction);
+    }
+
+    // 數值修改邏輯 (支援滾輪與按鈕)
+    function modifyValue(id, val) {
+        const input = document.getElementById(id);
+        let n = (parseInt(input.value) || 0) + val;
+        if (id === 'minInput') {
+            if (n < 0) n = 59;
+            else if (n > 59) n = 0;
+        } else if (n < 0) n = 0;
+        input.value = n;
+    }
+
+    function requestNotif() {
+        Notification.requestPermission().then(p => {
+            const b = document.getElementById('notifStatus');
+            if (p === "granted") { b.innerText = "✅ 通知已開"; b.classList.add('notif-on'); playBeep(); }
+        });
+    }
+
+    function addNewTimer() {
+        const h = parseInt(document.getElementById('hrInput').value) || 0;
+        const m = parseInt(document.getElementById('minInput').value) || 0;
+        const mainSec = (h * 3600) + (m * 60);
+        if (mainSec <= 0 && m === 0 && h === 0) return;
+
+        const id = Date.now();
+        const obj = { 
+            id, mainSec, buffSec: 300, 
+            remainingMain: mainSec, remainingBuff: 300,
+            phase: 1, icon: mushIcons[Math.floor(Math.random() * mushIcons.length)],
+            isRunning: true, interval: null 
+        };
+        timers.push(obj);
+        renderCard(obj);
+        if (Notification.permission !== "granted") requestNotif();
+    }
+
+    function renderCard(obj) {
+        const list = document.getElementById('timerList');
+        const card = document.createElement('div');
+        card.className = 'timer-card';
+        card.id = `card-${obj.id}`;
+        card.innerHTML = `
+            <div class="timer-header">
+                <span id="tag-${obj.id}" class="status-tag">階段 1: 蘑菇出現倒數</span>
+                <div class="mush-icon">${obj.icon}</div>
+            </div>
+            <div class="time-display">
+                <span id="main-${obj.id}" class="current-time active-timer">${format(obj.mainSec)}</span>
+                <span class="plus-sign">+</span>
+                <span id="buff-${obj.id}" class="current-time inactive-time">05:00</span>
+            </div>
+            <div class="progress-container"><div class="progress-bar" id="bar-${obj.id}"></div></div>
+            <div class="controls">
+                <button class="control-btn" onclick="toggle(${obj.id})" id="btn-${obj.id}">|| 暫停</button>
+                <button class="control-btn close-btn" onclick="remove(${obj.id})">✕</button>
+            </div>
+        `;
+        list.prepend(card);
+        start(obj);
+    }
+
+    function start(obj) {
+        obj.interval = setInterval(() => {
+            const mainEl = document.getElementById(`main-${obj.id}`);
+            const buffEl = document.getElementById(`buff-${obj.id}`);
+            const barEl = document.getElementById(`bar-${obj.id}`);
+            const tagEl = document.getElementById(`tag-${obj.id}`);
+            const card = document.getElementById(`card-${obj.id}`);
+
+            if (obj.phase === 1) {
+                obj.remainingMain--;
+                mainEl.innerText = format(obj.remainingMain);
+                barEl.style.width = `${(obj.remainingMain / obj.mainSec) * 100}%`;
+                if (obj.remainingMain <= 0) {
+                    obj.phase = 2;
+                    playBeep();
+                    notify(obj.icon, "蘑菇出現！開始卡位倒數");
+                    mainEl.className = "current-time inactive-time";
+                    buffEl.className = "current-time active-buff";
+                    card.classList.add('phase-buff');
+                    barEl.classList.add('bar-buff');
+                    tagEl.innerText = "階段 2: 5分鐘卡位中";
+                    tagEl.classList.add('buffing');
+                }
+            } else {
+                obj.remainingBuff--;
+                buffEl.innerText = format(obj.remainingBuff);
+                barEl.style.width = `${(obj.remainingBuff / 300) * 100}%`;
+                if (obj.remainingBuff <= 0) {
+                    clearInterval(obj.interval);
+                    playBeep();
+                    notify(obj.icon, "最後卡位結束！");
+                    tagEl.innerText = "倒數結束";
+                }
+            }
+        }, 1000);
+    }
+
+    function playBeep() {
+        new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play().catch(()=>{});
+    }
+
+    function notify(icon, msg) {
+        if (Notification.permission === "granted") new Notification(`${icon} 搶蘑菇提醒`, { body: msg });
+    }
+
+    function toggle(id) {
+        const o = timers.find(t => t.id === id);
+        const btn = document.getElementById(`btn-${id}`);
+        if (o.isRunning) { clearInterval(o.interval); btn.innerText = "▶ 開始"; }
+        else { start(o); btn.innerText = "|| 暫停"; }
+        o.isRunning = !o.isRunning;
+    }
+
+    function remove(id) {
+        const o = timers.find(t => t.id === id);
+        clearInterval(o.interval);
+        document.getElementById(`card-${id}`).remove();
+        timers = timers.filter(t => t.id !== id);
+    }
+
+    function format(s) {
+        if (s < 0) s = 0;
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sc = s % 60;
+        return (h > 0 ? h + ":" : "") + m.toString().padStart(2, '0') + ":" + sc.toString().padStart(2, '0');
+    }
+</script>
+</body>
+</html>
