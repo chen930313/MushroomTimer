@@ -1,368 +1,449 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pikmin Plus+ Mushroom Timer</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <style>
-        :root {
-            --sky-blue: #8ecae6;
-            --blue-green: #219ebc;
-            --space-blue: #023047;
-            --amber-flame: #ffb703;
-            --tiger-orange: #fb8500;
-            --bg-color: #f0f5f7;
-            --white: #ffffff;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pikmin Plus+</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sky: #8ecae6; --teal: #219ebc; --navy: #023047;
+  --orange: #fb8500; --bg: #eef4f7; --white: #ffffff;
+  --text-sub: #7a9aaa; --border: rgba(2,48,71,0.1);
+  --mono: 'DM Mono', monospace; --sans: 'Nunito', -apple-system, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: var(--sans); background: var(--bg); color: var(--navy); min-height: 100vh; padding: 18px 16px 48px; display: flex; flex-direction: column; align-items: center; }
+body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(circle, rgba(2,48,71,0.06) 1px, transparent 1px); background-size: 22px 22px; pointer-events: none; z-index: 0; }
+.container { width: 100%; max-width: 440px; position: relative; z-index: 1; }
 
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg-color); 
-            color: var(--space-blue); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 15px; 
-            margin: 0; 
-        }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 40px; height: 40px; background: var(--navy); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.logo h1 { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: var(--navy); }
+.logo-sub { font-size: 11px; color: var(--text-sub); font-weight: 700; letter-spacing: 0.5px; margin-top: -2px; }
+.notif-btn { font-family: var(--sans); font-size: 12px; font-weight: 800; padding: 8px 14px; border-radius: 99px; cursor: pointer; background: var(--white); color: var(--text-sub); border: 1.5px solid var(--border); white-space: nowrap; transition: transform 0.1s; }
+.notif-btn:active { transform: scale(0.95); }
+.notif-on { background: var(--orange); color: white; border-color: var(--orange); }
 
-        .container { width: 100%; max-width: 450px; }
+.add-card { background: var(--white); border-radius: 24px; padding: 18px; margin-bottom: 20px; border: 1.5px solid var(--border); }
+.add-label { font-size: 11px; font-weight: 800; color: var(--text-sub); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 14px; }
+.input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.stepper { flex: 1; background: var(--bg); border-radius: 16px; padding: 10px 8px; border: 1.5px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.stepper-label { font-size: 10px; font-weight: 800; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
+.stepper-controls { display: flex; align-items: center; width: 100%; justify-content: space-between; }
+.step-btn { width: 38px; height: 38px; border: 1.5px solid var(--border); background: var(--white); border-radius: 10px; font-size: 20px; color: var(--teal); cursor: pointer; font-weight: 900; font-family: var(--sans); transition: all 0.12s; display: flex; align-items: center; justify-content: center; }
+.step-btn:active { background: var(--sky); transform: scale(0.9); }
+input[type="number"] { width: 46px; border: none; text-align: center; font-size: 1.7rem; font-weight: 900; font-family: var(--mono); outline: none; background: transparent; color: var(--navy); -moz-appearance: textfield; cursor: ns-resize; user-select: none; -webkit-user-select: none; }
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+.add-btn { width: 100%; padding: 16px; border: none; border-radius: 16px; background: var(--navy); color: var(--sky); cursor: pointer; font-size: 15px; font-weight: 900; font-family: var(--sans); letter-spacing: 0.5px; transition: all 0.15s; }
+.add-btn:active { transform: scale(0.98); opacity: 0.9; }
 
-        .header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .header h1 { font-size: 1.5rem; margin: 0; font-weight: 900; }
-        .notif-badge { 
-            font-size: 12px; padding: 6px 14px; border-radius: 30px; 
-            cursor: pointer; background: var(--sky-blue); color: var(--space-blue); 
-            font-weight: bold; border: 2px solid var(--blue-green); transition: 0.3s; 
-        }
-        .notif-on { background: var(--tiger-orange); color: white; border-color: var(--amber-flame); }
-
-        .add-card { 
-            background: var(--white); padding: 20px; border-radius: 28px; 
-            margin-bottom: 25px; box-shadow: 0 10px 30px rgba(2, 48, 71, 0.08); 
-            border-top: 6px solid var(--blue-green); 
-        }
-        .input-row { display: flex; gap: 12px; margin-bottom: 15px; }
-        .stepper { 
-            flex: 1; display: flex; flex-direction: column; align-items: center; 
-            background: var(--sky-blue); border-radius: 18px; padding: 8px; 
-        }
-        .stepper span { font-size: 12px; color: var(--space-blue); margin-bottom: 4px; font-weight: 800; }
-        .stepper-controls { display: flex; align-items: center; width: 100%; justify-content: space-between; }
-        .step-btn { 
-            width: 40px; height: 40px; border: none; background: var(--white); 
-            border-radius: 12px; font-size: 20px; color: var(--blue-green); 
-            cursor: pointer; font-weight: bold; 
-        }
-        input[type="number"] { 
-            width: 50px; border: none; text-align: center; font-size: 1.6rem; 
-            font-weight: bold; outline: none; background: transparent; color: var(--space-blue); 
-        }
-
-        .add-btn { 
-            width: 100%; padding: 18px; border: none; border-radius: 18px; 
-            background: var(--space-blue); color: var(--sky-blue); 
-            cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.3s; 
-        }
-
-        .timer-card { 
-            background: var(--white); border-radius: 30px; padding: 22px; 
-            margin-bottom: 20px; position: relative; box-shadow: 0 8px 25px rgba(2, 48, 71, 0.05); 
-            border: 2px solid var(--sky-blue); transition: 0.4s; overflow: hidden; 
-        }
-        .phase-buff { border-color: var(--tiger-orange); box-shadow: 0 8px 25px rgba(251, 133, 0, 0.2); }
-        
-        .timer-header { display: flex; align-items: center; margin-bottom: 12px; }
-        
-        .mush-icon-wrapper {
-            width: 60px; height: 60px; background: #fff;
-            border-radius: 18px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 2px solid var(--sky-blue);
-            margin-right: 15px; transition: 0.4s;
-        }
-        .mush-img { width: 80%; height: 80%; object-fit: contain; }
-        
-        .phase-buff .mush-icon-wrapper { 
-            border-color: var(--tiger-orange); background: #fffdfa;
-            animation: pulse-glow 2s infinite, shake 0.6s infinite; 
-        }
-
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(251, 133, 0, 0.5); }
-            70% { box-shadow: 0 0 0 12px rgba(251, 133, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(251, 133, 0, 0); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-        }
-
-        .status-tag { background: var(--sky-blue); color: var(--space-blue); font-size: 11px; padding: 5px 12px; border-radius: 14px; font-weight: 900; }
-        .status-tag.buffing { background: var(--amber-flame); }
-
-        .time-display { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; }
-        .current-time { font-family: 'Courier New', monospace; font-weight: 900; }
-        .active-timer { color: var(--blue-green); font-size: 2.6rem; }
-        .active-buff { color: var(--tiger-orange); font-size: 2.6rem; }
-        .plus-sign { font-size: 1.5rem; color: var(--sky-blue); }
-        .inactive-time { color: #d1d9e0; font-size: 1.5rem; }
-
-        .progress-container { background: #f0f4f7; height: 12px; border-radius: 6px; margin-bottom: 20px; overflow: hidden; }
-        .progress-bar { background: var(--blue-green); height: 100%; width: 100%; transition: width 1s linear; }
-        .bar-buff { background: linear-gradient(90deg, var(--amber-flame), var(--tiger-orange)); }
-
-        .controls { display: flex; gap: 10px; align-items: center; }
-        .control-btn { 
-            flex: 1; height: 50px; border-radius: 15px; border: none; 
-            background: var(--white); color: var(--space-blue); 
-            border: 2px solid var(--sky-blue); font-weight: 800; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-        }
-        .play-pause-btn { background: var(--space-blue); color: var(--white); border: none; flex: 1.5; font-size: 1.5rem; }
-        .close-btn { width: 50px; flex: none; color: #e63946; background: #fff1f2; border: 2px solid #ffcfd2; font-size: 1rem; }
-    </style>
+.timer-card { background: var(--white); border-radius: 24px; padding: 18px; margin-bottom: 14px; border: 1.5px solid var(--border); animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1); overflow: hidden; position: relative; }
+@keyframes pop { from { opacity: 0; transform: scale(0.94) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.timer-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--teal); transition: background 0.4s; }
+.timer-card.phase-buff::after { background: var(--orange); }
+.timer-card.phase-buff { border-color: rgba(251,133,0,0.2); }
+.card-top { display: flex; align-items: center; margin-bottom: 14px; }
+.card-left { display: flex; align-items: center; gap: 12px; }
+.mush-box { width: 52px; height: 52px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 15px; display: flex; align-items: center; justify-content: center; transition: border-color 0.4s, background 0.4s; flex-shrink: 0; }
+.phase-buff .mush-box { border-color: rgba(251,133,0,0.35); background: #fff8f0; animation: mush-glow 1.8s ease-in-out infinite, mush-rock 0.55s ease-in-out infinite; }
+@keyframes mush-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(251,133,0,0.3); } 50% { box-shadow: 0 0 0 8px rgba(251,133,0,0); } }
+@keyframes mush-rock { 0%,100% { transform: rotate(0deg); } 30% { transform: rotate(6deg); } 70% { transform: rotate(-6deg); } }
+.card-phase { font-size: 10px; font-weight: 800; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+.card-tag { display: inline-flex; align-items: center; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 8px; background: rgba(33,158,188,0.1); color: var(--teal); transition: all 0.4s; }
+.card-tag.buffing { background: rgba(251,133,0,0.12); color: var(--orange); }
+.card-tag.done { background: rgba(2,48,71,0.07); color: var(--text-sub); }
+.time-row { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.time-block { flex: 1; background: var(--bg); border-radius: 14px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; border: 1.5px solid transparent; transition: all 0.4s; }
+.time-block.active-green { border-color: rgba(33,158,188,0.35); background: rgba(33,158,188,0.06); }
+.time-block.active-orange { border-color: rgba(251,133,0,0.35); background: rgba(251,133,0,0.06); }
+.time-lbl { font-size: 9px; font-weight: 800; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+.time-val { font-family: var(--mono); font-size: 1.75rem; font-weight: 500; color: var(--text-sub); letter-spacing: 1px; line-height: 1; transition: color 0.4s; }
+.time-block.active-green .time-val { color: var(--teal); }
+.time-block.active-orange .time-val { color: var(--orange); }
+.time-sep { font-size: 20px; color: var(--border); flex-shrink: 0; font-weight: 900; }
+.prog-bg { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--border); }
+.prog-bar { height: 100%; border-radius: 99px; background: var(--teal); transition: width 0.25s linear, background 0.4s; }
+.prog-bar.buff { background: var(--orange); }
+.ctrl-row { display: flex; gap: 8px; }
+.ctrl-btn { border: none; cursor: pointer; transition: transform 0.12s, opacity 0.12s; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.ctrl-btn:active { transform: scale(0.93); opacity: 0.85; }
+.ctrl-btn.primary { flex: 1; height: 48px; border-radius: 16px; background: var(--navy); color: var(--sky); }
+.ctrl-btn.secondary { width: 48px; height: 48px; border-radius: 14px; background: var(--bg); border: 1.5px solid var(--border); color: var(--text-sub); }
+.ctrl-btn.secondary:active { background: #dce8ee; }
+.ctrl-btn.del { width: 48px; height: 48px; border-radius: 14px; background: #fff0f0; border: 1.5px solid #ffd6d6; color: #d83030; }
+.ctrl-btn.del:active { background: #ffe0e0; }
+</style>
 </head>
 <body>
-
 <div class="container">
-    <div class="header">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <ellipse cx="12" cy="16" rx="4" ry="5.5" fill="rgba(142,202,230,0.4)" stroke="#8ecae6" stroke-width="1.2"/>
+          <ellipse cx="12" cy="9" rx="8.5" ry="7" fill="#8ecae6"/>
+          <circle cx="8.5" cy="7.5" r="1.8" fill="white" opacity="0.85"/>
+          <circle cx="14" cy="6" r="1.3" fill="white" opacity="0.85"/>
+        </svg>
+      </div>
+      <div>
         <h1>Pikmin Plus+</h1>
-        <div id="notifStatus" class="notif-badge" onclick="requestNotif()">🔔 NOTIFY</div>
+        <div class="logo-sub">蘑菇計時器</div>
+      </div>
     </div>
+    <button class="notif-btn" id="notifBtn" onclick="unlockAll()">🔔 解鎖通知</button>
+  </div>
 
-    <div class="add-card">
-        <div class="input-row">
-            <div class="stepper">
-                <span>HOURS</span>
-                <div class="stepper-controls">
-                    <button class="step-btn" onclick="modifyValue('hrInput', -1)">−</button>
-                    <input type="number" id="hrInput" value="0" min="0" onwheel="handleWheel(event)">
-                    <button class="step-btn" onclick="modifyValue('hrInput', 1)">+</button>
-                </div>
-            </div>
-            <div class="stepper">
-                <span>MINUTES</span>
-                <div class="stepper-controls">
-                    <button class="step-btn" onclick="modifyValue('minInput', -1)">−</button>
-                    <input type="number" id="minInput" value="10" min="0" max="59" onwheel="handleWheel(event)">
-                    <button class="step-btn" onclick="modifyValue('minInput', 1)">+</button>
-                </div>
-            </div>
+  <div class="add-card">
+    <div class="add-label">新增計時器</div>
+    <div class="input-row">
+      <div class="stepper">
+        <div class="stepper-label">Hours</div>
+        <div class="stepper-controls">
+          <button class="step-btn" onclick="modify('hrInput',-1)">−</button>
+          <input type="number" id="hrInput" value="0" min="0"
+            onwheel="handleWheel(event,'hrInput')"
+            ontouchstart="touchStart(event,'hrInput')"
+            ontouchmove="touchMove(event,'hrInput')"
+            onclick="zeroInput('hrInput')">
+          <button class="step-btn" onclick="modify('hrInput',1)">+</button>
         </div>
-        <button class="add-btn" onclick="addNewTimer()">START MUSHROOM TIMER</button>
+      </div>
+      <div class="stepper">
+        <div class="stepper-label">Minutes</div>
+        <div class="stepper-controls">
+          <button class="step-btn" onclick="modify('minInput',-1)">−</button>
+          <input type="number" id="minInput" value="10" min="0" max="59"
+            onwheel="handleWheel(event,'minInput')"
+            ontouchstart="touchStart(event,'minInput')"
+            ontouchmove="touchMove(event,'minInput')"
+            onclick="zeroInput('minInput')">
+          <button class="step-btn" onclick="modify('minInput',1)">+</button>
+        </div>
+      </div>
     </div>
+    <button class="add-btn" onclick="addTimer()">＋ START MUSHROOM TIMER</button>
+  </div>
 
-    <div id="timerList"></div>
+  <div id="timerList"></div>
 </div>
 
 <script>
-    // 6 種手繪 SVG 蘑菇，各有不同顏色
-    const mushSVGs = [
-        // 紅蘑菇（經典）
-        `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <ellipse cx="40" cy="54" rx="12" ry="16" fill="#f5c4b3" stroke="#c0604a" stroke-width="1.5"/>
-          <line x1="40" y1="38" x2="40" y2="64" stroke="#d4c5b0" stroke-width="2.5"/>
-          <ellipse cx="40" cy="26" rx="26" ry="22" fill="#e8372a" stroke="#b02218" stroke-width="1.5"/>
-          <ellipse cx="30" cy="20" rx="5" ry="5.5" fill="white" opacity="0.9"/>
-          <ellipse cx="48" cy="16" rx="4" ry="4" fill="white" opacity="0.9"/>
-          <ellipse cx="52" cy="28" rx="3" ry="3" fill="white" opacity="0.85"/>
-          <ellipse cx="24" cy="30" rx="2.5" ry="2.5" fill="white" opacity="0.8"/>
-          <path d="M20 38 Q16 50 26 54 Q40 58 54 54 Q64 50 60 38" fill="#d4c5b0" stroke="#b8aa9a" stroke-width="1"/>
-        </svg>`,
-        // 黃蘑菇
-        `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <ellipse cx="40" cy="54" rx="11" ry="15" fill="#fde8a0" stroke="#c49a10" stroke-width="1.5"/>
-          <line x1="40" y1="39" x2="40" y2="64" stroke="#d4c5b0" stroke-width="2.5"/>
-          <ellipse cx="40" cy="27" rx="25" ry="21" fill="#f5c518" stroke="#c49a10" stroke-width="1.5"/>
-          <ellipse cx="29" cy="21" rx="4.5" ry="5" fill="white" opacity="0.9"/>
-          <ellipse cx="49" cy="17" rx="3.5" ry="3.5" fill="white" opacity="0.9"/>
-          <ellipse cx="51" cy="29" rx="2.5" ry="2.5" fill="white" opacity="0.85"/>
-          <path d="M21 39 Q17 51 27 55 Q40 59 53 55 Q63 51 59 39" fill="#d4c5b0" stroke="#b8aa9a" stroke-width="1"/>
-        </svg>`,
-        // 紫蘑菇
-        `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <ellipse cx="40" cy="55" rx="11" ry="15" fill="#d8c8f0" stroke="#6a3da8" stroke-width="1.5"/>
-          <line x1="40" y1="40" x2="40" y2="65" stroke="#d4c5b0" stroke-width="2.5"/>
-          <ellipse cx="40" cy="27" rx="27" ry="22" fill="#8e5cd4" stroke="#6a3da8" stroke-width="1.5"/>
-          <ellipse cx="28" cy="20" rx="5" ry="5.5" fill="white" opacity="0.9"/>
-          <ellipse cx="50" cy="16" rx="4" ry="4" fill="white" opacity="0.9"/>
-          <ellipse cx="53" cy="29" rx="3" ry="3" fill="white" opacity="0.85"/>
-          <ellipse cx="24" cy="31" rx="2.5" ry="2.5" fill="white" opacity="0.8"/>
-          <path d="M19 40 Q15 52 26 56 Q40 60 54 56 Q65 52 61 40" fill="#d4c5b0" stroke="#b8aa9a" stroke-width="1"/>
-        </svg>`,
-        // 綠蘑菇
-        `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <ellipse cx="40" cy="55" rx="11" ry="15" fill="#c8eac0" stroke="#2e7d32" stroke-width="1.5"/>
-          <line x1="40" y1="40" x2="40" y2="65" stroke="#d4c5b0" stroke-width="2.5"/>
-          <ellipse cx="40" cy="27" rx="26" ry="21" fill="#4caf50" stroke="#2e7d32" stroke-width="1.5"/>
-          <ellipse cx="29" cy="20" rx="4.5" ry="5" fill="white" opacity="0.9"/>
-          <ellipse cx="49" cy="17" rx="3.5" ry="3.5" fill="white" opacity="0.9"/>
-          <ellipse cx="52" cy="29" rx="3" ry="3" fill="white" opacity="0.85"/>
-          <path d="M20 40 Q16 52 27 56 Q40 60 53 56 Q64 52 60 40" fill="#d4c5b0" stroke="#b8aa9a" stroke-width="1"/>
-        </svg>`,
-        // 藍蘑菇
-        `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <ellipse cx="40" cy="55" rx="11" ry="15" fill="#b8d8f4" stroke="#1565c0" stroke-width="1.5"/>
-          <line x1="40" y1="40" x2="40" y2="65" stroke="#d4c5b0" stroke-width="2.5"/>
-          <ellipse cx="40" cy="27" rx="26" ry="21" fill="#2196f3" stroke="#1565c0" stroke-width="1.5"/>
-          <ellipse cx="28" cy="20" rx="5" ry="5" fill="white" opacity="0.9"/>
-          <ellipse cx="50" cy="16" rx="4" ry="4" fill="white" opacity="0.9"/>
-          <ellipse cx="53" cy="29" rx="3" ry="3" fill="white" opacity="0.85"/>
-          <ellipse cx="23" cy="30" rx="2.5" ry="2.5" fill="white" opacity="0.8"/>
-          <path d="M20 40 Q16 52 27 56 Q40 60 54 56 Q64 52 60 40" fill="#d4c5b0" stroke="#b8aa9a" stroke-width="1"/>
-        </svg>`,
-        // 橘蘑菇
-        `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
-          <ellipse cx="40" cy="55" rx="11" ry="15" fill="#ffd8b0" stroke="#c05a00" stroke-width="1.5"/>
-          <line x1="40" y1="40" x2="40" y2="65" stroke="#d4c5b0" stroke-width="2.5"/>
-          <ellipse cx="40" cy="27" rx="26" ry="21" fill="#ff8c00" stroke="#c05a00" stroke-width="1.5"/>
-          <ellipse cx="29" cy="20" rx="4.5" ry="5" fill="white" opacity="0.9"/>
-          <ellipse cx="50" cy="17" rx="3.5" ry="3.5" fill="white" opacity="0.9"/>
-          <ellipse cx="52" cy="30" rx="3" ry="3" fill="white" opacity="0.85"/>
-          <path d="M20 40 Q16 52 27 56 Q40 60 53 56 Q64 52 60 40" fill="#d4c5b0" stroke="#b8aa9a" stroke-width="1"/>
-        </svg>`
-    ];
+const MUSHROOMS = [
+  ['#e8372a','#b02218'],['#f5c518','#c49a10'],['#8e5cd4','#6a3da8'],
+  ['#4caf50','#2e7d32'],['#2196f3','#1565c0'],['#ff8c00','#c05a00']
+].map(([f,s]) => `<svg viewBox="0 0 56 56" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="28" cy="40" rx="8" ry="11" fill="${f}22" stroke="${s}" stroke-width="1.2"/>
+  <line x1="28" y1="29" x2="28" y2="48" stroke="#c8bfaf" stroke-width="2"/>
+  <path d="M20 31 Q17 38 22 41 Q28 44 34 41 Q39 38 36 31" fill="#ddd5c5" stroke="#c8bfaf" stroke-width="0.8"/>
+  <ellipse cx="28" cy="19" rx="18" ry="15" fill="${f}" stroke="${s}" stroke-width="1.2"/>
+  <ellipse cx="20" cy="14" rx="3.5" ry="4" fill="white" opacity="0.88"/>
+  <ellipse cx="34" cy="11" rx="2.8" ry="3" fill="white" opacity="0.88"/>
+  <ellipse cx="37" cy="20" rx="2" ry="2" fill="white" opacity="0.82"/>
+  <ellipse cx="17" cy="21" rx="1.8" ry="1.8" fill="white" opacity="0.78"/>
+</svg>`);
 
-    let timers = [];
+const SVG_PAUSE = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="10" y1="7" x2="10" y2="17"/><line x1="14" y1="7" x2="14" y2="17"/></svg>`;
+const SVG_PLAY  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="7,4 21,12 7,20"/></svg>`;
+const SVG_DONE  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
-    function handleWheel(event) {
-        event.preventDefault();
-        modifyValue(event.target.id, event.deltaY < 0 ? 1 : -1);
+let timers = [];
+let audioCtx = null;
+let audioReady = false;
+
+const nowMs = () => Date.now();
+const LS_KEY = 'pikmin_v3';
+
+// ── 存到 localStorage（每秒 + 切背景）──
+function saveState() {
+  const now = nowMs();
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(timers.map(t => {
+      const c = { ...t };
+      if (t.isRunning) {
+        if (t.phase === 1 && t.mainEndsAt) c.pausedMainRemain = Math.max(0, t.mainEndsAt - now);
+        if (t.phase === 2 && t.buffEndsAt) c.pausedBuffRemain = Math.max(0, t.buffEndsAt - now);
+      }
+      return c;
+    })));
+  } catch(e) {}
+}
+
+// ── 從 localStorage 恢復（頁面被殺重開也能救回來）──
+function loadState() {
+  try {
+    const data = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    const now = nowMs();
+    data.forEach(t => {
+      if (t.alerted2 && !t.isRunning) return;
+      if (t.isRunning) {
+        if (t.phase === 1) t.mainEndsAt = now + (t.pausedMainRemain || 0);
+        else               t.buffEndsAt = now + (t.pausedBuffRemain || 0);
+      }
+      timers.push(t);
+      renderCard(t);
+      if (t.phase === 2) applyBuffDom(t.id);
+      if (!t.isRunning && !t.alerted2) setPlayIcon(t.id, 'play');
+      if (t.alerted2) {
+        setPlayIcon(t.id, 'done');
+        const btn = document.getElementById('play-' + t.id);
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; }
+        const tag = document.getElementById('tag-' + t.id);
+        if (tag) { tag.textContent = '結束'; tag.className = 'card-tag done'; }
+        const lbl = document.getElementById('phase-lbl-' + t.id);
+        if (lbl) lbl.textContent = 'PHASE 2 · 卡位倒數';
+      }
+    });
+  } catch(e) {}
+}
+
+setInterval(saveState, 1000);
+document.addEventListener('visibilitychange', saveState);
+
+// ── 音效 & 通知 ──
+function unlockAll() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  audioReady = true;
+  Notification.requestPermission().then(p => {
+    const btn = document.getElementById('notifBtn');
+    btn.textContent = p === 'granted' ? '✅ 已就緒' : '🔔 聲音已就緒';
+    btn.classList.add('notif-on');
+  });
+}
+function playBeep() {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  [0, 0.18, 0.36].forEach((delay, i) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = i === 2 ? 1047 : 880;
+    const t = audioCtx.currentTime + delay;
+    g.gain.setValueAtTime(0.22, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t); o.stop(t + 0.22);
+  });
+}
+function pushNotif(msg) {
+  if (Notification.permission === 'granted') new Notification('Pikmin Plus+', { body: msg });
+}
+
+// ── 輸入控制 ──
+function modify(id, d) {
+  const el = document.getElementById(id);
+  let v = (parseInt(el.value) || 0) + d;
+  if (id === 'minInput') { if (v < 0) v = 59; else if (v > 59) v = 0; }
+  else if (v < 0) v = 0;
+  el.value = v;
+}
+function zeroInput(id) { document.getElementById(id).value = 0; }
+function handleWheel(e, id) { e.preventDefault(); modify(id, e.deltaY < 0 ? 1 : -1); }
+let _ty = {};
+function touchStart(e, id) { _ty[id] = e.touches[0].clientY; }
+function touchMove(e, id) {
+  e.preventDefault();
+  const dy = _ty[id] - e.touches[0].clientY;
+  if (Math.abs(dy) >= 12) { modify(id, dy > 0 ? 1 : -1); _ty[id] = e.touches[0].clientY; }
+}
+
+// ── 新增計時器 ──
+function addTimer() {
+  if (!audioReady) unlockAll();
+  const h = parseInt(document.getElementById('hrInput').value) || 0;
+  const m = parseInt(document.getElementById('minInput').value) || 0;
+  const mainMs = (h * 3600 + m * 60) * 1000;
+  const skip = mainMs <= 0;
+  const id = nowMs();
+  const t = {
+    id, phase: skip ? 2 : 1, isRunning: true,
+    mainEndsAt: skip ? null : id + mainMs,
+    buffEndsAt: skip ? id + 300_000 : null,
+    mainMs: skip ? 0 : mainMs, buffMs: 300_000,
+    pausedMainRemain: mainMs, pausedBuffRemain: 300_000,
+    mushIdx: Math.floor(Math.random() * MUSHROOMS.length),
+    alerted: skip, alerted2: false,
+  };
+  timers.push(t);
+  renderCard(t);
+  if (skip) applyBuffDom(t.id);
+  saveState();
+}
+
+// 套用 Phase 2 DOM 樣式
+function applyBuffDom(id) {
+  const card    = document.getElementById('card-'       + id);
+  const mainBlk = document.getElementById('main-block-' + id);
+  const buffBlk = document.getElementById('buff-block-' + id);
+  const barEl   = document.getElementById('bar-'        + id);
+  const tag     = document.getElementById('tag-'        + id);
+  const phaseLbl= document.getElementById('phase-lbl-'  + id);
+  if (!card) return;
+  mainBlk.classList.remove('active-green');
+  buffBlk.classList.add('active-orange');
+  card.classList.add('phase-buff');
+  barEl.classList.add('buff');
+  tag.textContent = '卡位中！'; tag.classList.add('buffing');
+  phaseLbl.textContent = 'PHASE 2 · 卡位倒數';
+}
+
+// ── 渲染卡片 ──
+function renderCard(t) {
+  const list = document.getElementById('timerList');
+  const card = document.createElement('div');
+  card.className = 'timer-card'; card.id = 'card-' + t.id;
+  card.innerHTML = `
+    <div class="card-top"><div class="card-left">
+      <div class="mush-box" id="mush-${t.id}">${MUSHROOMS[t.mushIdx]}</div>
+      <div>
+        <div class="card-phase" id="phase-lbl-${t.id}">PHASE 1 · 等待蘑菇</div>
+        <div class="card-tag" id="tag-${t.id}">倒數中</div>
+      </div>
+    </div></div>
+    <div class="time-row">
+      <div class="time-block active-green" id="main-block-${t.id}">
+        <div class="time-lbl">出現倒數</div>
+        <div class="time-val" id="main-val-${t.id}">--:--</div>
+      </div>
+      <div class="time-sep">›</div>
+      <div class="time-block" id="buff-block-${t.id}">
+        <div class="time-lbl">卡位時間</div>
+        <div class="time-val" id="buff-val-${t.id}">05:00</div>
+      </div>
+    </div>
+    <div class="prog-bg"><div class="prog-bar" id="bar-${t.id}"></div></div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn primary" id="play-${t.id}" onclick="toggleTimer(${t.id})">${SVG_PAUSE}</button>
+      <button class="ctrl-btn secondary" onclick="resetTimer(${t.id})">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+        </svg>
+      </button>
+      <button class="ctrl-btn del" onclick="removeTimer(${t.id})">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>`;
+  list.prepend(card);
+}
+
+// ── RAF 主循環（純顯示，時間由時間戳決定不累積誤差）──
+function loop() {
+  const now = nowMs();
+  timers.forEach(t => {
+    if (!t.isRunning) return;
+    const mainEl   = document.getElementById('main-val-'   + t.id);
+    const buffEl   = document.getElementById('buff-val-'   + t.id);
+    const barEl    = document.getElementById('bar-'        + t.id);
+    const card     = document.getElementById('card-'       + t.id);
+    const tag      = document.getElementById('tag-'        + t.id);
+    const phaseLbl = document.getElementById('phase-lbl-'  + t.id);
+    const mainBlk  = document.getElementById('main-block-' + t.id);
+    const buffBlk  = document.getElementById('buff-block-' + t.id);
+    if (!mainEl) return;
+
+    if (t.phase === 1) {
+      const rem = Math.max(0, t.mainEndsAt - now);
+      mainEl.textContent = fmt(Math.ceil(rem / 1000));
+      barEl.style.width = (rem / t.mainMs * 100).toFixed(2) + '%';
+      if (rem <= 0 && !t.alerted) {
+        t.alerted = true; t.phase = 2; t.buffEndsAt = now + t.buffMs;
+        playBeep(); pushNotif('🍄 蘑菇出現了！快去搶位！');
+        mainBlk.classList.remove('active-green'); buffBlk.classList.add('active-orange');
+        barEl.classList.add('buff'); barEl.style.width = '100%';
+        card.classList.add('phase-buff');
+        tag.textContent = '卡位中！'; tag.classList.add('buffing');
+        phaseLbl.textContent = 'PHASE 2 · 卡位倒數';
+      }
+    } else {
+      const rem = Math.max(0, t.buffEndsAt - now);
+      buffEl.textContent = fmt(Math.ceil(rem / 1000));
+      barEl.style.width = (rem / t.buffMs * 100).toFixed(2) + '%';
+      if (rem <= 0 && !t.alerted2) {
+        t.alerted2 = true; t.isRunning = false;
+        playBeep(); pushNotif('🔥 卡位結束！快去搶蘑菇！');
+        tag.textContent = '結束'; tag.classList.remove('buffing'); tag.classList.add('done');
+        setPlayIcon(t.id, 'done');
+        const btn = document.getElementById('play-' + t.id);
+        btn.disabled = true; btn.style.opacity = '0.4';
+        saveState();
+      }
     }
+  });
+  requestAnimationFrame(loop);
+}
 
-    function modifyValue(id, val) {
-        const input = document.getElementById(id);
-        let n = (parseInt(input.value) || 0) + val;
-        if (id === 'minInput') {
-            if (n < 0) n = 59; else if (n > 59) n = 0;
-        } else if (n < 0) n = 0;
-        input.value = n;
-    }
+function setPlayIcon(id, state) {
+  const btn = document.getElementById('play-' + id);
+  if (!btn) return;
+  btn.innerHTML = state === 'pause' ? SVG_PAUSE : state === 'play' ? SVG_PLAY : SVG_DONE;
+}
 
-    function requestNotif() {
-        Notification.requestPermission().then(p => {
-            const b = document.getElementById('notifStatus');
-            if (p === "granted") { b.innerText = "✅ ON"; b.classList.add('notif-on'); }
-        });
-    }
+function toggleTimer(id) {
+  const t = timers.find(x => x.id === id);
+  if (!t || t.alerted2) return;
+  const now = nowMs();
+  if (t.isRunning) {
+    if (t.phase === 1) t.pausedMainRemain = Math.max(0, t.mainEndsAt - now);
+    else               t.pausedBuffRemain = Math.max(0, t.buffEndsAt - now);
+    t.isRunning = false; setPlayIcon(id, 'play');
+  } else {
+    if (t.phase === 1) t.mainEndsAt = now + t.pausedMainRemain;
+    else               t.buffEndsAt = now + t.pausedBuffRemain;
+    t.isRunning = true; setPlayIcon(id, 'pause');
+  }
+  saveState();
+}
 
-    function addNewTimer() {
-        const h = parseInt(document.getElementById('hrInput').value) || 0;
-        const m = parseInt(document.getElementById('minInput').value) || 0;
-        const mainSec = (h * 3600) + (m * 60);
-        if (mainSec <= 0 && m === 0 && h === 0) return;
+function resetTimer(id) {
+  const t = timers.find(x => x.id === id);
+  if (!t) return;
+  t.phase = 1; t.isRunning = false; t.alerted = false; t.alerted2 = false;
+  t.pausedMainRemain = t.mainMs; t.pausedBuffRemain = t.buffMs;
+  t.mainEndsAt = null; t.buffEndsAt = null;
+  t.mushIdx = Math.floor(Math.random() * MUSHROOMS.length);
+  document.getElementById('card-'       + id).classList.remove('phase-buff');
+  document.getElementById('main-block-' + id).classList.add('active-green');
+  document.getElementById('buff-block-' + id).classList.remove('active-orange');
+  const barEl = document.getElementById('bar-' + id);
+  barEl.classList.remove('buff'); barEl.style.width = '100%';
+  document.getElementById('main-val-'  + id).textContent = fmt(Math.ceil(t.mainMs / 1000));
+  document.getElementById('buff-val-'  + id).textContent = '05:00';
+  const tag = document.getElementById('tag-' + id);
+  tag.textContent = '倒數中'; tag.className = 'card-tag';
+  document.getElementById('phase-lbl-' + id).textContent = 'PHASE 1 · 等待蘑菇';
+  setPlayIcon(id, 'play');
+  const btn = document.getElementById('play-' + id);
+  btn.disabled = false; btn.style.opacity = '1';
+  document.getElementById('mush-' + id).innerHTML = MUSHROOMS[t.mushIdx];
+  saveState();
+}
 
-        const id = Date.now();
-        const obj = { id, mainSec, remainingMain: mainSec, remainingBuff: 300, phase: 1, svgIdx: Math.floor(Math.random() * mushSVGs.length), isRunning: true, interval: null };
-        timers.push(obj);
-        renderCard(obj);
-        if (Notification.permission !== "granted") requestNotif();
-    }
+function removeTimer(id) {
+  timers = timers.filter(x => x.id !== id);
+  const card = document.getElementById('card-' + id);
+  if (!card) return;
+  card.style.transition = 'opacity .22s, transform .22s';
+  card.style.opacity = '0'; card.style.transform = 'scale(0.94)';
+  setTimeout(() => card.remove(), 230);
+  saveState();
+}
 
-    function renderCard(obj) {
-        const list = document.getElementById('timerList');
-        const card = document.createElement('div');
-        card.className = 'timer-card';
-        card.id = `card-${obj.id}`;
-        card.innerHTML = `
-            <div class="timer-header">
-                <div class="mush-icon-wrapper" id="mush-wrap-${obj.id}">
-                    ${mushSVGs[obj.svgIdx]}
-                </div>
-                <span id="tag-${obj.id}" class="status-tag">PHASE 1: COUNTDOWN</span>
-            </div>
-            <div class="time-display">
-                <span id="main-${obj.id}" class="current-time active-timer">${format(obj.remainingMain)}</span>
-                <span class="plus-sign">+</span>
-                <span id="buff-${obj.id}" class="current-time inactive-time">05:00</span>
-            </div>
-            <div class="progress-container"><div class="progress-bar" id="bar-${obj.id}"></div></div>
-            <div class="controls">
-                <button class="control-btn play-pause-btn" onclick="toggle(${obj.id})" id="btn-${obj.id}">⏸</button>
-                <button class="control-btn" onclick="reset(${obj.id})">🔄</button>
-                <button class="control-btn close-btn" onclick="remove(${obj.id})">✕</button>
-            </div>
-        `;
-        list.prepend(card);
-        start(obj);
-    }
+function fmt(s) {
+  if (s < 0) s = 0;
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sc = s % 60;
+  return (h > 0 ? h + ':' : '') + String(m).padStart(2,'0') + ':' + String(sc).padStart(2,'0');
+}
 
-    function start(obj) {
-        obj.interval = setInterval(() => {
-            const mainEl = document.getElementById(`main-${obj.id}`);
-            const buffEl = document.getElementById(`buff-${obj.id}`);
-            const barEl = document.getElementById(`bar-${obj.id}`);
-            const tagEl = document.getElementById(`tag-${obj.id}`);
-            const card = document.getElementById(`card-${obj.id}`);
-            if (!mainEl) return;
-
-            if (obj.phase === 1) {
-                obj.remainingMain--;
-                mainEl.innerText = format(obj.remainingMain);
-                barEl.style.width = `${(obj.remainingMain / obj.mainSec) * 100}%`;
-                if (obj.remainingMain <= 0) {
-                    obj.phase = 2; playBeep(); notify("🍄", "蘑菇出現了！快搶位！");
-                    mainEl.className = "current-time inactive-time";
-                    buffEl.className = "current-time active-buff";
-                    card.classList.add('phase-buff');
-                    barEl.classList.add('bar-buff');
-                    tagEl.innerText = "PHASE 2: RUSHING"; tagEl.classList.add('buffing');
-                }
-            } else {
-                obj.remainingBuff--;
-                buffEl.innerText = format(obj.remainingBuff);
-                barEl.style.width = `${(obj.remainingBuff / 300) * 100}%`;
-                if (obj.remainingBuff <= 0) { clearInterval(obj.interval); playBeep(); notify("🔥", "最後卡位結束！"); }
-            }
-        }, 1000);
-    }
-
-    function toggle(id) {
-        const o = timers.find(t => t.id === id);
-        const btn = document.getElementById(`btn-${id}`);
-        if (o.isRunning) { clearInterval(o.interval); btn.innerHTML = "▶"; }
-        else { start(o); btn.innerHTML = "⏸"; }
-        o.isRunning = !o.isRunning;
-    }
-
-    function reset(id) {
-        const o = timers.find(t => t.id === id);
-        clearInterval(o.interval);
-        o.remainingMain = o.mainSec; o.remainingBuff = 300; o.phase = 1; o.isRunning = false;
-        const card = document.getElementById(`card-${id}`);
-        const mainEl = document.getElementById(`main-${id}`);
-        const buffEl = document.getElementById(`buff-${id}`);
-        const barEl = document.getElementById(`bar-${id}`);
-        const tagEl = document.getElementById(`tag-${id}`);
-        const btn = document.getElementById(`btn-${id}`);
-        card.classList.remove('phase-buff');
-        mainEl.className = "current-time active-timer"; mainEl.innerText = format(o.mainSec);
-        buffEl.className = "current-time inactive-time"; buffEl.innerText = "05:00";
-        barEl.classList.remove('bar-buff'); barEl.style.width = "100%";
-        tagEl.innerText = "PHASE 1: COUNTDOWN"; tagEl.classList.remove('buffing');
-        btn.innerHTML = "▶";
-    }
-
-    function remove(id) {
-        const o = timers.find(t => t.id === id);
-        if(o) clearInterval(o.interval);
-        document.getElementById(`card-${id}`).remove();
-        timers = timers.filter(t => t.id !== id);
-    }
-
-    function playBeep() { new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play().catch(()=>{}); }
-    function notify(icon, msg) { if (Notification.permission === "granted") new Notification(`${icon} Pikmin`, { body: msg }); }
-    function format(s) {
-        if (s < 0) s = 0;
-        const h = Math.floor(s / 3600);
-        const m = Math.floor((s % 3600) / 60);
-        const sc = s % 60;
-        return (h > 0 ? h + ":" : "") + m.toString().padStart(2, '0') + ":" + sc.toString().padStart(2, '0');
-    }
+loadState();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
